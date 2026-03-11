@@ -1,12 +1,7 @@
 <template>
   <div class="login-container">
-
-    <!-- Logo -->
     <img src="../assets/logo1.png" class="logo" alt="logo" />
-
-    <!-- Login Form -->
     <LoginForm />
-
   </div>
 </template>
 
@@ -24,11 +19,7 @@ export default {
 <style>
 .login-container {
   min-height: 100vh;
-
-  /* Background image */
   background-image: url("../assets/logformbackground.png");
-
-  /* Make image cover whole screen */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -37,11 +28,11 @@ export default {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  padding: 20px;
 }
 
-/* Logo style */
 .logo {
-  width: 140px;
+  width: 120px;
   margin-bottom: 20px;
 }
 </style>

@@ -14,8 +14,8 @@
     <label>Role</label>
     <select v-model="role">
       <option>Official</option>
-      <option>HR</option>
       <option>Admin</option>
+      <option>HR</option>
     </select>
 
     <p class="terms">
@@ -23,9 +23,10 @@
       read and acknowledge the <span>Privacy Policy</span>.
     </p>
 
-    <button class="login-btn" @click="login">Login >></button>
+    <button class="login-btn" @click="login">Login</button>
+    <p class="signup-link" @click="$router.push('/signup')">Create an account</p>
 
-    <p class="forgot">Forgot password?</p>
+    <p class="forgot" @click="goToForgotPassword">Forgot password?</p>
   </div>
 </template>
 
@@ -36,7 +37,7 @@ export default {
     return {
       username: "",
       password: "",
-      role: "Instructor",
+      role: "Official",
       showPassword: false,
     };
   },
@@ -48,6 +49,9 @@ export default {
       }
 
       this.$router.push("/dashboard");
+    },
+    goToForgotPassword() {
+      this.$router.push("/forgot-password");
     },
   },
 };
@@ -80,6 +84,7 @@ select {
   font-size: 16px;
   outline: none;
   box-sizing: border-box;
+  background: #fff;
 }
 
 .password-box {
@@ -137,5 +142,9 @@ select {
   color: #7caf1f;
   font-size: 16px;
   cursor: pointer;
+}
+.signup-link{
+  font-size: 16px;
+  color: #7ab01f;
 }
 </style>
