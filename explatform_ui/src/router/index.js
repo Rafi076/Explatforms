@@ -67,6 +67,11 @@ const routes = [
         name: "Setting",
         component: SettingView,
       },
+      {
+        path: "department-work/:departmentId",
+        name: "DepartmentWorkList",
+        component: () => import("../views/DepartmentWorkListView.vue"),
+      }
     ],
   },
 ];
