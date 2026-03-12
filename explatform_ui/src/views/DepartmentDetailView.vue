@@ -464,7 +464,7 @@ export default {
 
 .top-bar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   width: 100%;
   margin-bottom: 24px;
 }

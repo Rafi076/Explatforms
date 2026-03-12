@@ -278,6 +278,6 @@ body.dark-mode .ledger-table td {
 }
 
 body.dark-mode .ledger-table tbody tr:hover {
-  background: #273549 !important;
+  background: #5685c6 !important;
 }
 </style>

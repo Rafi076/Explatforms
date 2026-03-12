@@ -33,11 +33,14 @@ export default {
 
 .dashboard-body {
   display: flex;
+  min-width: 0;
 }
 
 .dashboard-content {
-  flex: 1;
+   flex: 1;
+  min-width: 0;
   padding: 24px;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 </style>
