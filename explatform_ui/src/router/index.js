@@ -10,10 +10,12 @@ import DashboardHomeView from "../views/DashboardHomeView.vue";
 import EmployeeDetailView from "../views/EmployeeDetailView.vue";
 import DepartmentDetailView from "../views/DepartmentDetailView.vue";
 import WarehouseView from "../views/WarehouseView.vue";
+import WarehouseStateView from "../views/WarehouseStateView.vue";
 import LedgerView from "../views/LedgerView.vue";
 import EquipOrderPurchaseView from "../views/EquipOrderPurchaseView.vue";
 import ReportView from "../views/ReportView.vue";
 import SettingView from "../views/SettingView.vue";
+import DepartmentWorkListView from "../views/DepartmentWorkListView.vue";
 
 Vue.use(VueRouter);
 
@@ -43,9 +45,19 @@ const routes = [
         component: DepartmentDetailView,
       },
       {
+        path: "department-work/:departmentId",
+        name: "DepartmentWorkList",
+        component: DepartmentWorkListView,
+      },
+      {
         path: "warehouse",
         name: "Warehouse",
         component: WarehouseView,
+      },
+      {
+        path: "warehouse-state/:warehouseId",
+        name: "WarehouseState",
+        component: WarehouseStateView,
       },
       {
         path: "ledger",
@@ -67,11 +79,6 @@ const routes = [
         name: "Setting",
         component: SettingView,
       },
-      {
-        path: "department-work/:departmentId",
-        name: "DepartmentWorkList",
-        component: () => import("../views/DepartmentWorkListView.vue"),
-      }
     ],
   },
 ];

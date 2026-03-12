@@ -228,4 +228,56 @@ body.dark-mode .back-btn {
 body.dark-mode .back-btn:hover {
   background: #1d4ed8 !important;
 }
+
+body.dark-mode .warehouse-table thead,
+body.dark-mode .warehouse-state-table thead {
+  background: #374151 !important;
+}
+
+body.dark-mode .warehouse-table th,
+body.dark-mode .warehouse-state-table th {
+  color: #f9fafb !important;
+  border-bottom: 1px solid #4b5563 !important;
+}
+
+body.dark-mode .warehouse-table td,
+body.dark-mode .warehouse-state-table td {
+  color: #e5e7eb !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+body.dark-mode .warehouse-table tbody tr:hover,
+body.dark-mode .warehouse-state-table tbody tr:hover {
+  background: #273549 !important;
+}
+
+body.dark-mode .clickable-link {
+  color: #60a5fa !important;
+}
+
+body.dark-mode .back-btn {
+  background: #2563eb !important;
+}
+
+body.dark-mode .back-btn:hover {
+  background: #1d4ed8 !important;
+}
+
+body.dark-mode .ledger-table thead {
+  background: #374151 !important;
+}
+
+body.dark-mode .ledger-table th {
+  color: #f9fafb !important;
+  border-bottom: 1px solid #4b5563 !important;
+}
+
+body.dark-mode .ledger-table td {
+  color: #e5e7eb !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+body.dark-mode .ledger-table tbody tr:hover {
+  background: #273549 !important;
+}
 </style>
