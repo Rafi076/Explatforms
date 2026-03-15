@@ -280,4 +280,56 @@ body.dark-mode .ledger-table td {
 body.dark-mode .ledger-table tbody tr:hover {
   background: #5685c6 !important;
 }
+
+body.dark-mode .equip-table thead {
+  background: #374151 !important;
+}
+
+body.dark-mode .equip-table th {
+  color: #f9fafb !important;
+  border-bottom: 1px solid #4b5563 !important;
+}
+
+body.dark-mode .equip-table td {
+  color: #e5e7eb !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+body.dark-mode .equip-table tbody tr:hover {
+  background: #273549 !important;
+}
+
+body.dark-mode .tab-btn {
+  background: #4b5563 !important;
+  color: #f9fafb !important;
+}
+
+body.dark-mode .tab-btn.active {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .copy-btn {
+  background: #7c3aed !important;
+}
+
+body.dark-mode .status-complete {
+  background: #14532d !important;
+  color: #dcfce7 !important;
+}
+
+body.dark-mode .status-partial {
+  background: #78350f !important;
+  color: #fef3c7 !important;
+}
+
+body.dark-mode .status-incomplete {
+  background: #7f1d1d !important;
+  color: #fee2e2 !important;
+}
+
+body.dark-mode .modal-box {
+  background: #1f2937 !important;
+  color: #f9fafb !important;
+}
 </style>
