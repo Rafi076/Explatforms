@@ -229,9 +229,11 @@ import AppPagination from "../components/AppPagination.vue";
 
 export default {
   name: "EmployeeDetailView",
+
   components: {
     AppPagination,
   },
+
   data() {
     return {
       searchEmployeeId: "",
@@ -242,101 +244,44 @@ export default {
       selectedEmployeeIds: [],
       editingEmployeeId: null,
       isAdding: false,
+
       editForm: {
         employeeName: "",
         employeeCode: "",
         employeePhone: "",
         departmentName: "",
-        joinDate: "",
-        salary: "",
+        employeeJoindate: "",   // ✅ FIXED
+        employeeSalary: "",     // ✅ FIXED
       },
-      employees: [
-        {
-          employeeName: "John Smith",
-          employeeId: "EMP001",
-          employeeCode: "E-1001",
-          employeePhone: "01711111111",
-          departmentId: "DEP01",
-          departmentName: "Accounts",
-          joinDate: "2023-01-10",
-          salary: "50000",
-        },
-        {
-          employeeName: "Sarah Ahmed",
-          employeeId: "EMP002",
-          employeeCode: "E-1002",
-          employeePhone: "01822222222",
-          departmentId: "DEP02",
-          departmentName: "HR",
-          joinDate: "2022-08-15",
-          salary: "55000",
-        },
-        {
-          employeeName: "Michael Lee",
-          employeeId: "EMP003",
-          employeeCode: "E-1003",
-          employeePhone: "01933333333",
-          departmentId: "DEP03",
-          departmentName: "IT",
-          joinDate: "2021-05-20",
-          salary: "65000",
-        },
-        {
-          employeeName: "Nusrat Jahan",
-          employeeId: "EMP004",
-          employeeCode: "E-1004",
-          employeePhone: "01644444444",
-          departmentId: "DEP02",
-          departmentName: "HR",
-          joinDate: "2024-02-01",
-          salary: "48000",
-        },
-        {
-          employeeName: "David Roy",
-          employeeId: "EMP005",
-          employeeCode: "E-1005",
-          employeePhone: "01555555555",
-          departmentId: "DEP04",
-          departmentName: "Marketing",
-          joinDate: "2020-11-12",
-          salary: "60000",
-        },
-        {
-          employeeName: "Ayesha Noor",
-          employeeId: "EMP006",
-          employeeCode: "E-1006",
-          employeePhone: "01466666666",
-          departmentId: "DEP01",
-          departmentName: "Accounts",
-          joinDate: "2023-06-18",
-          salary: "53000",
-        },
-        {
-          employeeName: "Tanvir Hasan",
-          employeeId: "EMP007",
-          employeeCode: "E-1007",
-          employeePhone: "01377777777",
-          departmentId: "DEP05",
-          departmentName: "Operations",
-          joinDate: "2022-01-25",
-          salary: "47000",
-        },
-      ],
+
+      employees: [], // ✅ now coming from backend
     };
   },
+
+  // ✅ API CALL HERE
+mounted() {
+  fetch("/employees")  // note: no localhost:8080, just the relative path
+    .then(res => res.json())
+    .then(data => {
+      console.log(data);
+      this.employees = data;
+    })
+    .catch(err => console.error("Fetch error:", err));
+},
+
   computed: {
     filteredEmployees() {
       return this.employees.filter((employee) => {
         const matchEmployeeId = employee.employeeId
-          .toLowerCase()
+          ?.toLowerCase()
           .includes(this.searchEmployeeId.toLowerCase());
 
-        const matchDepartmentId = employee.departmentId
-          .toLowerCase()
+        const matchDepartmentId = employee.departmentName
+          ?.toLowerCase()
           .includes(this.searchDepartmentId.toLowerCase());
 
         const matchEmployeePhone = employee.employeePhone
-          .toLowerCase()
+          ?.toLowerCase()
           .includes(this.searchEmployeePhone.toLowerCase());
 
         return matchEmployeeId && matchDepartmentId && matchEmployeePhone;
@@ -365,6 +310,7 @@ export default {
       return this.editingEmployeeId !== null || this.isAdding;
     },
   },
+
   watch: {
     searchEmployeeId() {
       this.currentPage = 1;
@@ -376,6 +322,7 @@ export default {
       this.currentPage = 1;
     },
   },
+
   methods: {
     changePage(page) {
       if (page < 1 || page > this.totalPages) return;
@@ -388,8 +335,8 @@ export default {
         employeeCode: "",
         employeePhone: "",
         departmentName: "",
-        joinDate: "",
-        salary: "",
+        employeeJoindate: "",
+        employeeSalary: "",
       };
     },
 
@@ -416,18 +363,15 @@ export default {
         return;
       }
 
-      if (this.selectedEmployeeIds.length === 0) {
-        alert("Please select one employee to edit.");
-        return;
-      }
-
-      if (this.selectedEmployeeIds.length > 1) {
-        alert("Please select only one employee to edit.");
+      if (this.selectedEmployeeIds.length !== 1) {
+        alert("Please select exactly one employee to edit.");
         return;
       }
 
       const selectedId = this.selectedEmployeeIds[0];
-      const employee = this.employees.find((item) => item.employeeId === selectedId);
+      const employee = this.employees.find(
+        (item) => item.employeeId === selectedId
+      );
 
       if (!employee) return;
 
@@ -437,20 +381,21 @@ export default {
         employeeCode: employee.employeeCode,
         employeePhone: employee.employeePhone,
         departmentName: employee.departmentName,
-        joinDate: employee.joinDate,
-        salary: employee.salary,
+        employeeJoindate: employee.employeeJoindate, // ✅ FIXED
+        employeeSalary: employee.employeeSalary,     // ✅ FIXED
       };
     },
 
     handleSave() {
+      // ⚠️ still frontend only (not yet API)
       if (this.isAdding) {
         if (
           !this.editForm.employeeName ||
           !this.editForm.employeeCode ||
           !this.editForm.employeePhone ||
           !this.editForm.departmentName ||
-          !this.editForm.joinDate ||
-          !this.editForm.salary
+          !this.editForm.employeeJoindate ||
+          !this.editForm.employeeSalary
         ) {
           alert("Please fill all fields before saving.");
           return;
@@ -464,10 +409,9 @@ export default {
           employeeId: newEmployeeId,
           employeeCode: this.editForm.employeeCode,
           employeePhone: this.editForm.employeePhone,
-          departmentId: this.searchDepartmentId || "DEP00",
           departmentName: this.editForm.departmentName,
-          joinDate: this.editForm.joinDate,
-          salary: this.editForm.salary,
+          employeeJoindate: this.editForm.employeeJoindate,
+          employeeSalary: this.editForm.employeeSalary,
         };
 
         this.employees.unshift(newEmployee);
@@ -478,20 +422,20 @@ export default {
 
       if (!this.editingEmployeeId) return;
 
-      const employeeIndex = this.employees.findIndex(
-        (employee) => employee.employeeId === this.editingEmployeeId
+      const index = this.employees.findIndex(
+        (e) => e.employeeId === this.editingEmployeeId
       );
 
-      if (employeeIndex === -1) return;
+      if (index === -1) return;
 
-      this.employees[employeeIndex] = {
-        ...this.employees[employeeIndex],
+      this.employees[index] = {
+        ...this.employees[index],
         employeeName: this.editForm.employeeName,
         employeeCode: this.editForm.employeeCode,
         employeePhone: this.editForm.employeePhone,
         departmentName: this.editForm.departmentName,
-        joinDate: this.editForm.joinDate,
-        salary: this.editForm.salary,
+        employeeJoindate: this.editForm.employeeJoindate,
+        employeeSalary: this.editForm.employeeSalary,
       };
 
       this.employees = [...this.employees];
@@ -516,21 +460,14 @@ export default {
         return;
       }
 
-      const confirmed = window.confirm(
-        "Are you sure you want to delete the selected employee(s)?"
-      );
-
+      const confirmed = window.confirm("Are you sure?");
       if (!confirmed) return;
 
       this.employees = this.employees.filter(
-        (employee) => !this.selectedEmployeeIds.includes(employee.employeeId)
+        (e) => !this.selectedEmployeeIds.includes(e.employeeId)
       );
 
       this.selectedEmployeeIds = [];
-
-      if (this.currentPage > this.totalPages) {
-        this.currentPage = this.totalPages;
-      }
     },
 
     handleReset() {
@@ -545,23 +482,23 @@ export default {
     toggleSelectAllCurrentPage(event) {
       if (this.isEditing) return;
 
-      const currentPageIds = this.paginatedEmployees.map(
-        (employee) => employee.employeeId
+      const currentIds = this.paginatedEmployees.map(
+        (e) => e.employeeId
       );
 
       if (event.target.checked) {
-        const merged = [...this.selectedEmployeeIds, ...currentPageIds];
-        this.selectedEmployeeIds = [...new Set(merged)];
+        this.selectedEmployeeIds = [
+          ...new Set([...this.selectedEmployeeIds, ...currentIds]),
+        ];
       } else {
         this.selectedEmployeeIds = this.selectedEmployeeIds.filter(
-          (id) => !currentPageIds.includes(id)
+          (id) => !currentIds.includes(id)
         );
       }
     },
   },
 };
 </script>
-
 <style scoped>
 .employee-page {
   width: 100%;
