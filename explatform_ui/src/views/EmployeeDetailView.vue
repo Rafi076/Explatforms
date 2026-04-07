@@ -204,8 +204,8 @@
               <td>{{ employee.employeeCode }}</td>
               <td>{{ employee.employeePhone }}</td>
               <td>{{ employee.departmentName }}</td>
-              <td>{{ employee.joinDate }}</td>
-              <td>{{ employee.salary }}</td>
+<td>{{ employee.employeeJoindate }}</td>
+<td>{{ employee.employeeSalary }}</td>
             </template>
           </tr>
 

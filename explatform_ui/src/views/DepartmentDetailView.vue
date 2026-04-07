@@ -179,6 +179,7 @@ export default {
   components: {
     AppPagination,
   },
+
   data() {
     return {
       searchDepartmentId: "",
@@ -189,62 +190,42 @@ export default {
       selectedDepartmentIds: [],
       editingDepartmentId: null,
       isAdding: false,
+
       editForm: {
         departmentCode: "",
         departmentName: "",
       },
-      departments: [
-        {
-          departmentId: "DEP001",
-          departmentCode: "D-1001",
-          departmentName: "Accounts",
-        },
-        {
-          departmentId: "DEP002",
-          departmentCode: "D-1002",
-          departmentName: "Human Resources",
-        },
-        {
-          departmentId: "DEP003",
-          departmentCode: "D-1003",
-          departmentName: "Information Technology",
-        },
-        {
-          departmentId: "DEP004",
-          departmentCode: "D-1004",
-          departmentName: "Marketing",
-        },
-        {
-          departmentId: "DEP005",
-          departmentCode: "D-1005",
-          departmentName: "Operations",
-        },
-        {
-          departmentId: "DEP006",
-          departmentCode: "D-1006",
-          departmentName: "Sales",
-        },
-        {
-          departmentId: "DEP007",
-          departmentCode: "D-1007",
-          departmentName: "Procurement",
-        },
-      ],
+
+      // ✅ data will come from backend
+      departments: [],
     };
   },
+
+  // ✅ FIXED: inside export default
+  mounted() {
+    fetch("/departments")
+      .then((res) => res.json())
+      .then((data) => {
+        this.departments = data;
+      })
+      .catch((err) => {
+        console.error("Error fetching departments:", err);
+      });
+  },
+
   computed: {
     filteredDepartments() {
       return this.departments.filter((department) => {
         const matchDepartmentId = department.departmentId
-          .toLowerCase()
+          ?.toLowerCase()
           .includes(this.searchDepartmentId.toLowerCase());
 
         const matchDepartmentCode = department.departmentCode
-          .toLowerCase()
+          ?.toLowerCase()
           .includes(this.searchDepartmentCode.toLowerCase());
 
         const matchDepartmentName = department.departmentName
-          .toLowerCase()
+          ?.toLowerCase()
           .includes(this.searchDepartmentName.toLowerCase());
 
         return (
@@ -277,6 +258,7 @@ export default {
       return this.editingDepartmentId !== null || this.isAdding;
     },
   },
+
   watch: {
     searchDepartmentId() {
       this.currentPage = 1;
@@ -288,6 +270,7 @@ export default {
       this.currentPage = 1;
     },
   },
+
   methods: {
     changePage(page) {
       if (page < 1 || page > this.totalPages) return;
@@ -324,13 +307,8 @@ export default {
         return;
       }
 
-      if (this.selectedDepartmentIds.length === 0) {
-        alert("Please select one department to edit.");
-        return;
-      }
-
-      if (this.selectedDepartmentIds.length > 1) {
-        alert("Please select only one department to edit.");
+      if (this.selectedDepartmentIds.length !== 1) {
+        alert("Please select exactly one department to edit.");
         return;
       }
 
@@ -349,6 +327,7 @@ export default {
     },
 
     handleSave() {
+      // ⚠️ still frontend-only (not API yet)
       if (this.isAdding) {
         if (!this.editForm.departmentCode || !this.editForm.departmentName) {
           alert("Please fill all fields before saving.");
@@ -372,14 +351,14 @@ export default {
 
       if (!this.editingDepartmentId) return;
 
-      const departmentIndex = this.departments.findIndex(
-        (department) => department.departmentId === this.editingDepartmentId
+      const index = this.departments.findIndex(
+        (d) => d.departmentId === this.editingDepartmentId
       );
 
-      if (departmentIndex === -1) return;
+      if (index === -1) return;
 
-      this.departments[departmentIndex] = {
-        ...this.departments[departmentIndex],
+      this.departments[index] = {
+        ...this.departments[index],
         departmentCode: this.editForm.departmentCode,
         departmentName: this.editForm.departmentName,
       };
@@ -406,22 +385,14 @@ export default {
         return;
       }
 
-      const confirmed = window.confirm(
-        "Are you sure you want to delete the selected department(s)?"
-      );
-
+      const confirmed = window.confirm("Are you sure?");
       if (!confirmed) return;
 
       this.departments = this.departments.filter(
-        (department) =>
-          !this.selectedDepartmentIds.includes(department.departmentId)
+        (d) => !this.selectedDepartmentIds.includes(d.departmentId)
       );
 
       this.selectedDepartmentIds = [];
-
-      if (this.currentPage > this.totalPages) {
-        this.currentPage = this.totalPages;
-      }
     },
 
     handleReset() {
@@ -436,22 +407,25 @@ export default {
     toggleSelectAllCurrentPage(event) {
       if (this.isEditing) return;
 
-      const currentPageIds = this.paginatedDepartments.map(
-        (department) => department.departmentId
+      const currentIds = this.paginatedDepartments.map(
+        (d) => d.departmentId
       );
 
       if (event.target.checked) {
-        const merged = [...this.selectedDepartmentIds, ...currentPageIds];
-        this.selectedDepartmentIds = [...new Set(merged)];
+        this.selectedDepartmentIds = [
+          ...new Set([...this.selectedDepartmentIds, ...currentIds]),
+        ];
       } else {
         this.selectedDepartmentIds = this.selectedDepartmentIds.filter(
-          (id) => !currentPageIds.includes(id)
+          (id) => !currentIds.includes(id)
         );
       }
     },
 
     goToDepartmentWork(department) {
-      this.$router.push(`/dashboard/department-work/${department.departmentId}`);
+      this.$router.push(
+        `/dashboard/department-work/${department.departmentId}`
+      );
     },
   },
 };

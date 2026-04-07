@@ -178,46 +178,10 @@ export default {
         details: "",
         note: "",
       },
-      works: [
-        {
-          id: 1,
-          departmentId: "DEP001",
-          onProcessWork: "Fabric Purchase",
-          processCode: "P-1001",
-          buyer: "John Buyer",
-          purchaseDate: "2024-01-05",
-          deliveryDate: "2024-01-15",
-          quantity: "500",
-          details: "Cotton fabric purchase",
-          note: "Urgent",
-        },
-        {
-          id: 2,
-          departmentId: "DEP001",
-          onProcessWork: "Dyeing",
-          processCode: "P-1002",
-          buyer: "Sarah Buyer",
-          purchaseDate: "2024-01-10",
-          deliveryDate: "2024-01-20",
-          quantity: "300",
-          details: "Blue color dyeing",
-          note: "Priority",
-        },
-        {
-          id: 3,
-          departmentId: "DEP002",
-          onProcessWork: "Packaging",
-          processCode: "P-2001",
-          buyer: "Michael",
-          purchaseDate: "2024-02-01",
-          deliveryDate: "2024-02-12",
-          quantity: "700",
-          details: "Final packaging",
-          note: "Normal",
-        },
-      ],
+      works: [], // ✅ now dynamic from API
     };
   },
+
   computed: {
     departmentId() {
       return this.$route.params.departmentId;
@@ -228,11 +192,12 @@ export default {
         .filter((item) => item.departmentId === this.departmentId)
         .filter((item) => {
           const matchProcessCode = item.processCode
-            .toLowerCase()
+            ?.toLowerCase()
             .includes(this.searchProcessCode.toLowerCase());
 
           const matchStartDate =
             !this.searchStartDate || item.purchaseDate >= this.searchStartDate;
+
           const matchEndDate =
             !this.searchEndDate || item.purchaseDate <= this.searchEndDate;
 
@@ -262,6 +227,7 @@ export default {
       return this.editingWorkId !== null || this.isAdding;
     },
   },
+
   watch: {
     searchProcessCode() {
       this.currentPage = 1;
@@ -273,190 +239,207 @@ export default {
       this.currentPage = 1;
     },
   },
-  methods: {
-    goBack() {
-      this.$router.push("/dashboard/department-detail");
-    },
 
-    changePage(page) {
-      if (page < 1 || page > this.totalPages) return;
-      this.currentPage = page;
-    },
-
-    resetEditForm() {
-      this.editForm = {
-        onProcessWork: "",
-        processCode: "",
-        buyer: "",
-        purchaseDate: "",
-        deliveryDate: "",
-        quantity: "",
-        details: "",
-        note: "",
-      };
-    },
-
-    handleSearch() {
-      this.currentPage = 1;
-    },
-
-    handleAdd() {
-      if (this.isEditing) {
-        alert("Please save or cancel the current editing first.");
-        return;
-      }
-
-      this.isAdding = true;
-      this.editingWorkId = null;
-      this.selectedWorkIds = [];
-      this.resetEditForm();
-      this.currentPage = 1;
-    },
-
-    handleEdit() {
-      if (this.isAdding) {
-        alert("Please save or cancel the new row first.");
-        return;
-      }
-
-      if (this.selectedWorkIds.length === 0) {
-        alert("Please select one work item to edit.");
-        return;
-      }
-
-      if (this.selectedWorkIds.length > 1) {
-        alert("Please select only one work item to edit.");
-        return;
-      }
-
-      const selectedId = this.selectedWorkIds[0];
-      const item = this.works.find((w) => w.id === selectedId);
-
-      if (!item) return;
-
-      this.editingWorkId = selectedId;
-      this.editForm = {
-        onProcessWork: item.onProcessWork,
-        processCode: item.processCode,
-        buyer: item.buyer,
-        purchaseDate: item.purchaseDate,
-        deliveryDate: item.deliveryDate,
-        quantity: item.quantity,
-        details: item.details,
-        note: item.note,
-      };
-    },
-
-    handleSave() {
-      if (this.isAdding) {
-        if (
-          !this.editForm.onProcessWork ||
-          !this.editForm.processCode ||
-          !this.editForm.buyer ||
-          !this.editForm.purchaseDate ||
-          !this.editForm.deliveryDate ||
-          !this.editForm.quantity
-        ) {
-          alert("Please fill required fields before saving.");
-          return;
-        }
-
-        const newItem = {
-          id: Date.now(),
-          departmentId: this.departmentId,
-          onProcessWork: this.editForm.onProcessWork,
-          processCode: this.editForm.processCode,
-          buyer: this.editForm.buyer,
-          purchaseDate: this.editForm.purchaseDate,
-          deliveryDate: this.editForm.deliveryDate,
-          quantity: this.editForm.quantity,
-          details: this.editForm.details,
-          note: this.editForm.note,
-        };
-
-        this.works.unshift(newItem);
-        this.isAdding = false;
-        this.resetEditForm();
-        return;
-      }
-
-      if (!this.editingWorkId) return;
-
-      const index = this.works.findIndex((w) => w.id === this.editingWorkId);
-      if (index === -1) return;
-
-      this.works[index] = {
-        ...this.works[index],
-        onProcessWork: this.editForm.onProcessWork,
-        processCode: this.editForm.processCode,
-        buyer: this.editForm.buyer,
-        purchaseDate: this.editForm.purchaseDate,
-        deliveryDate: this.editForm.deliveryDate,
-        quantity: this.editForm.quantity,
-        details: this.editForm.details,
-        note: this.editForm.note,
-      };
-
-      this.works = [...this.works];
-      this.editingWorkId = null;
-      this.resetEditForm();
-    },
-
-    handleCancelEdit() {
-      this.isAdding = false;
-      this.editingWorkId = null;
-      this.resetEditForm();
-    },
-
-    handleDelete() {
-      if (this.isEditing) {
-        alert("Please save or cancel editing first.");
-        return;
-      }
-
-      if (this.selectedWorkIds.length === 0) {
-        alert("Please select at least one work item to delete.");
-        return;
-      }
-
-      const confirmed = window.confirm(
-        "Are you sure you want to delete the selected work item(s)?"
-      );
-      if (!confirmed) return;
-
-      this.works = this.works.filter((w) => !this.selectedWorkIds.includes(w.id));
-      this.selectedWorkIds = [];
-
-      if (this.currentPage > this.totalPages) {
-        this.currentPage = this.totalPages;
-      }
-    },
-
-    handleReset() {
-      this.searchProcessCode = "";
-      this.searchStartDate = "";
-      this.searchEndDate = "";
-      this.selectedWorkIds = [];
-      this.currentPage = 1;
-      this.handleCancelEdit();
-    },
-
-    toggleSelectAllCurrentPage(event) {
-      if (this.isEditing) return;
-
-      const currentPageIds = this.paginatedWorks.map((item) => item.id);
-
-      if (event.target.checked) {
-        const merged = [...this.selectedWorkIds, ...currentPageIds];
-        this.selectedWorkIds = [...new Set(merged)];
-      } else {
-        this.selectedWorkIds = this.selectedWorkIds.filter(
-          (id) => !currentPageIds.includes(id)
-        );
-      }
-    },
+  mounted() {
+    this.fetchWorks(); // ✅ load from backend
   },
+
+methods: {
+  // ✅ BASE URL (IMPORTANT)
+  BASE_URL() {
+    return "http://localhost:8080";
+  },
+
+  // ✅ FETCH DATA FROM BACKEND
+  fetchWorks() {
+    fetch(`${this.BASE_URL()}/department-works/${this.departmentId}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch works");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        this.works = data;
+      })
+      .catch((err) => {
+        console.error("Error fetching works:", err);
+        this.works = [];
+      });
+  },
+
+  goBack() {
+    this.$router.push("/dashboard/department-detail");
+  },
+
+  changePage(page) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  },
+
+  resetEditForm() {
+    this.editForm = {
+      onProcessWork: "",
+      processCode: "",
+      buyer: "",
+      purchaseDate: "",
+      deliveryDate: "",
+      quantity: "",
+      details: "",
+      note: "",
+    };
+  },
+
+  handleSearch() {
+    this.currentPage = 1;
+  },
+
+  handleAdd() {
+    if (this.isEditing) {
+      alert("Please save or cancel the current editing first.");
+      return;
+    }
+
+    this.isAdding = true;
+    this.editingWorkId = null;
+    this.selectedWorkIds = [];
+    this.resetEditForm();
+    this.currentPage = 1;
+  },
+
+  handleEdit() {
+    if (this.isAdding) {
+      alert("Please save or cancel the new row first.");
+      return;
+    }
+
+    if (this.selectedWorkIds.length !== 1) {
+      alert("Please select exactly one work item to edit.");
+      return;
+    }
+
+    const selectedId = this.selectedWorkIds[0];
+    const item = this.works.find((w) => w.id === selectedId);
+
+    if (!item) return;
+
+    this.editingWorkId = selectedId;
+    this.editForm = { ...item };
+  },
+
+  // ✅ SAVE (ADD + UPDATE WITH API)
+  handleSave() {
+    // ➕ ADD
+    if (this.isAdding) {
+      fetch(`${this.BASE_URL()}/department-works`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...this.editForm,
+          departmentId: this.departmentId,
+        }),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to add");
+          return res.json();
+        })
+        .then(() => {
+          this.fetchWorks();
+          this.isAdding = false;
+          this.resetEditForm();
+        })
+        .catch((err) => console.error("Add error:", err));
+
+      return;
+    }
+
+    // ✏️ UPDATE
+    if (!this.editingWorkId) return;
+
+    fetch(`${this.BASE_URL()}/department-works/${this.editingWorkId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(this.editForm),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to update");
+        return res.json();
+      })
+      .then(() => {
+        this.fetchWorks();
+        this.editingWorkId = null;
+        this.resetEditForm();
+      })
+      .catch((err) => console.error("Update error:", err));
+  },
+
+  handleCancelEdit() {
+    this.isAdding = false;
+    this.editingWorkId = null;
+    this.resetEditForm();
+  },
+
+  // ✅ DELETE WITH API
+  handleDelete() {
+    if (this.isEditing) {
+      alert("Please save or cancel editing first.");
+      return;
+    }
+
+    if (this.selectedWorkIds.length === 0) {
+      alert("Select at least one item.");
+      return;
+    }
+
+    if (!confirm("Are you sure?")) return;
+
+    Promise.all(
+      this.selectedWorkIds.map((id) =>
+        fetch(`${this.BASE_URL()}/department-works/${id}`, {
+          method: "DELETE",
+        }).then((res) => {
+          if (!res.ok) throw new Error("Delete failed");
+        })
+      )
+    )
+      .then(() => {
+        this.fetchWorks();
+        this.selectedWorkIds = [];
+      })
+      .catch((err) => console.error("Delete error:", err));
+  },
+
+  handleReset() {
+    this.searchProcessCode = "";
+    this.searchStartDate = "";
+    this.searchEndDate = "";
+    this.selectedWorkIds = [];
+    this.currentPage = 1;
+    this.handleCancelEdit();
+  },
+
+  toggleSelectAllCurrentPage(event) {
+    if (this.isEditing) return;
+
+    const currentPageIds = this.paginatedWorks.map((item) => item.id);
+
+    if (event.target.checked) {
+      this.selectedWorkIds = [
+        ...new Set([...this.selectedWorkIds, ...currentPageIds]),
+      ];
+    } else {
+      this.selectedWorkIds = this.selectedWorkIds.filter(
+        (id) => !currentPageIds.includes(id)
+      );
+    }
+  },
+},
 };
+
 </script>
 
 <style scoped>
