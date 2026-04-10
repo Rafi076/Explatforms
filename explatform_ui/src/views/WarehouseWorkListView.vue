@@ -2,7 +2,7 @@
   <div class="state-page">
     <div class="page-header">
       <button class="back-btn" @click="goBack">← Back</button>
-      <h2 class="page-title">Warehouse State - {{ warehouseId }}</h2>
+      <h2 class="page-title">Warehouse Work - {{ warehouseId }}</h2>
     </div>
 
     <div class="top-bar">
@@ -100,14 +100,14 @@
 
           <tr
             v-for="item in paginatedStates"
-            :key="item.id"
-            :class="{ 'editing-row': editingStateId === item.id }"
+            :key="item.id || item.materialId"
+            :class="{ 'editing-row': Number(editingStateId) === Number(item.id) }"
           >
             <td class="checkbox-col">
               <input
-                type="checkbox"
-                :value="item.id"
-                v-model="selectedStateIds"
+               type="checkbox"
+  :value="item.id"
+  v-model="selectedStateIds"
                 :disabled="isEditing && editingStateId !== item.id"
               />
             </td>
@@ -153,9 +153,11 @@ import AppPagination from "../components/AppPagination.vue";
 
 export default {
   name: "WarehouseStateView",
+
   components: {
     AppPagination,
   },
+
   data() {
     return {
       searchMaterialId: "",
@@ -167,6 +169,7 @@ export default {
       selectedStateIds: [],
       editingStateId: null,
       isAdding: false,
+
       editForm: {
         materialName: "",
         materialId: "",
@@ -176,68 +179,40 @@ export default {
         buyerName: "",
         note: "",
       },
-      states: [
-        {
-          id: 1,
-          warehouseId: "WH001",
-          materialName: "Cotton Fabric",
-          materialId: "MAT001",
-          purchaseQuantity: "500",
-          purchaseDate: "2024-01-05",
-          availableQty: "320",
-          buyerName: "John Buyer",
-          note: "Main stock",
-        },
-        {
-          id: 2,
-          warehouseId: "WH001",
-          materialName: "Blue Dye",
-          materialId: "MAT002",
-          purchaseQuantity: "120",
-          purchaseDate: "2024-01-08",
-          availableQty: "70",
-          buyerName: "Sarah Buyer",
-          note: "For next batch",
-        },
-        {
-          id: 3,
-          warehouseId: "WH002",
-          materialName: "Packaging Box",
-          materialId: "MAT003",
-          purchaseQuantity: "1000",
-          purchaseDate: "2024-02-01",
-          availableQty: "650",
-          buyerName: "Michael",
-          note: "Dry storage",
-        },
-      ],
+
+      states: [],
     };
   },
+
+  mounted() {
+    this.fetchStates();
+  },
+
   computed: {
+    // ✅ get from route
     warehouseId() {
       return this.$route.params.warehouseId;
     },
 
+    // ✅ NO NEED extra warehouseId filter (API already filtered)
     filteredStates() {
-      return this.states
-        .filter((item) => item.warehouseId === this.warehouseId)
-        .filter((item) => {
-          const matchMaterialId = item.materialId
+      return this.states.filter((item) => {
+        return (
+          (item.materialId || "")
             .toLowerCase()
-            .includes(this.searchMaterialId.toLowerCase());
+            .includes(this.searchMaterialId.toLowerCase()) &&
 
-          const matchBuyerName = item.buyerName
+          (item.buyerName || "")
             .toLowerCase()
-            .includes(this.searchBuyerName.toLowerCase());
+            .includes(this.searchBuyerName.toLowerCase()) &&
 
-          const matchStartDate =
-            !this.searchStartDate || item.purchaseDate >= this.searchStartDate;
+          (!this.searchStartDate ||
+            item.purchaseDate >= this.searchStartDate) &&
 
-          const matchEndDate =
-            !this.searchEndDate || item.purchaseDate <= this.searchEndDate;
-
-          return matchMaterialId && matchBuyerName && matchStartDate && matchEndDate;
-        });
+          (!this.searchEndDate ||
+            item.purchaseDate <= this.searchEndDate)
+        );
+      });
     },
 
     totalPages() {
@@ -246,8 +221,7 @@ export default {
 
     paginatedStates() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredStates.slice(start, end);
+      return this.filteredStates.slice(start, start + this.itemsPerPage);
     },
 
     isAllCurrentPageSelected() {
@@ -262,6 +236,7 @@ export default {
       return this.editingStateId !== null || this.isAdding;
     },
   },
+
   watch: {
     searchMaterialId() {
       this.currentPage = 1;
@@ -276,7 +251,24 @@ export default {
       this.currentPage = 1;
     },
   },
+
   methods: {
+    // ✅ FIXED POSITION
+    BASE_URL() {
+      return "http://localhost:8080/api";
+    },
+
+    // ✅ FETCH DATA
+    fetchStates() {
+      fetch(`${this.BASE_URL()}/warehouse-works/${this.warehouseId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("WORK DATA:", data); // debug
+          this.states = data; // ✅ correct
+        })
+        .catch((err) => console.error("Fetch error:", err));
+    },
+
     goBack() {
       this.$router.push("/dashboard/warehouse");
     },
@@ -304,7 +296,7 @@ export default {
 
     handleAdd() {
       if (this.isEditing) {
-        alert("Please save or cancel the current editing first.");
+        alert("Please save or cancel current editing first.");
         return;
       }
 
@@ -315,91 +307,87 @@ export default {
       this.currentPage = 1;
     },
 
-    handleEdit() {
-      if (this.isAdding) {
-        alert("Please save or cancel the new row first.");
-        return;
-      }
+handleEdit() {
+  if (this.isAdding) {
+    alert("Save/cancel new row first.");
+    return;
+  }
 
-      if (this.selectedStateIds.length === 0) {
-        alert("Please select one row to edit.");
-        return;
-      }
+  if (this.selectedStateIds.length !== 1) {
+    alert("Select exactly ONE row.");
+    return;
+  }
 
-      if (this.selectedStateIds.length > 1) {
-        alert("Please select only one row to edit.");
-        return;
-      }
+  const selectedId = Number(this.selectedStateIds[0]);
+  this.selectedStateIds = [];
 
-      const selectedId = this.selectedStateIds[0];
-      const item = this.states.find((s) => s.id === selectedId);
+  console.log("Selected ID:", selectedId);
+  console.log("All states:", this.states);
 
-      if (!item) return;
+  const item = this.states.find((s) => Number(s.id) === Number(selectedId));
 
-      this.editingStateId = selectedId;
-      this.editForm = {
-        materialName: item.materialName,
-        materialId: item.materialId,
-        purchaseQuantity: item.purchaseQuantity,
-        purchaseDate: item.purchaseDate,
-        availableQty: item.availableQty,
-        buyerName: item.buyerName,
-        note: item.note,
-      };
-    },
+  if (!item) {
+    alert("Selected item not found!");
+    return;
+  }
 
-    handleSave() {
-      if (this.isAdding) {
-        if (
-          !this.editForm.materialName ||
-          !this.editForm.materialId ||
-          !this.editForm.purchaseQuantity ||
-          !this.editForm.purchaseDate ||
-          !this.editForm.availableQty ||
-          !this.editForm.buyerName
-        ) {
-          alert("Please fill required fields before saving.");
-          return;
-        }
+  this.editingStateId = selectedId;
 
-        const newItem = {
-          id: Date.now(),
-          warehouseId: this.warehouseId,
-          materialName: this.editForm.materialName,
-          materialId: this.editForm.materialId,
-          purchaseQuantity: this.editForm.purchaseQuantity,
-          purchaseDate: this.editForm.purchaseDate,
-          availableQty: this.editForm.availableQty,
-          buyerName: this.editForm.buyerName,
-          note: this.editForm.note,
-        };
+  this.editForm = {
+    materialName: item.materialName,
+    materialId: item.materialId,
+    purchaseQuantity: item.purchaseQuantity,
+    purchaseDate: item.purchaseDate,
+    availableQty: item.availableQty,
+    buyerName: item.buyerName,
+    note: item.note,
+  };
+},
 
-        this.states.unshift(newItem);
+handleSave() {
+  const payload = {
+  materialName: this.editForm.materialName || "",
+  materialId: this.editForm.materialId || "",
+  purchaseQuantity: parseInt(this.editForm.purchaseQuantity) || 0,
+  purchaseDate: this.editForm.purchaseDate || null,
+  availableQty: parseInt(this.editForm.availableQty) || 0,
+  buyerName: this.editForm.buyerName || "",
+  note: this.editForm.note || "",
+  warehouseId: this.warehouseId,
+};
+
+  // ✅ ADD
+  if (this.isAdding) {
+    fetch(`${this.BASE_URL()}/warehouse-works`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then(() => {
+        this.fetchStates();
         this.isAdding = false;
         this.resetEditForm();
-        return;
-      }
+        this.selectedStateIds = [];
+      })
+      .catch(err => console.error("POST ERROR:", err));
 
-      if (!this.editingStateId) return;
+    return;
+  }
 
-      const index = this.states.findIndex((s) => s.id === this.editingStateId);
-      if (index === -1) return;
-
-      this.states[index] = {
-        ...this.states[index],
-        materialName: this.editForm.materialName,
-        materialId: this.editForm.materialId,
-        purchaseQuantity: this.editForm.purchaseQuantity,
-        purchaseDate: this.editForm.purchaseDate,
-        availableQty: this.editForm.availableQty,
-        buyerName: this.editForm.buyerName,
-        note: this.editForm.note,
-      };
-
-      this.states = [...this.states];
+  // ✅ UPDATE
+  fetch(`${this.BASE_URL()}/warehouse-works/${this.editingStateId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+    .then(() => {
+      this.fetchStates(); // refresh DB data
       this.editingStateId = null;
+      this.selectedStateIds = [];
       this.resetEditForm();
-    },
+    })
+    .catch(err => console.error("PUT ERROR:", err));
+},
 
     handleCancelEdit() {
       this.isAdding = false;
@@ -408,27 +396,16 @@ export default {
     },
 
     handleDelete() {
-      if (this.isEditing) {
-        alert("Please save or cancel editing first.");
-        return;
-      }
-
-      if (this.selectedStateIds.length === 0) {
-        alert("Please select at least one row to delete.");
-        return;
-      }
-
-      const confirmed = window.confirm(
-        "Are you sure you want to delete the selected row(s)?"
-      );
-      if (!confirmed) return;
-
-      this.states = this.states.filter((s) => !this.selectedStateIds.includes(s.id));
-      this.selectedStateIds = [];
-
-      if (this.currentPage > this.totalPages) {
-        this.currentPage = this.totalPages;
-      }
+      Promise.all(
+        this.selectedStateIds.map((id) =>
+          fetch(`${this.BASE_URL()}/warehouse-works/${id}`, {
+            method: "DELETE",
+          })
+        )
+      ).then(() => {
+        this.fetchStates();
+        this.selectedStateIds = [];
+      });
     },
 
     handleReset() {
@@ -444,14 +421,15 @@ export default {
     toggleSelectAllCurrentPage(event) {
       if (this.isEditing) return;
 
-      const currentPageIds = this.paginatedStates.map((item) => item.id);
+      const currentIds = this.paginatedStates.map((item) => item.id);
 
       if (event.target.checked) {
-        const merged = [...this.selectedStateIds, ...currentPageIds];
-        this.selectedStateIds = [...new Set(merged)];
+        this.selectedStateIds = [
+          ...new Set([...this.selectedStateIds, ...currentIds]),
+        ];
       } else {
         this.selectedStateIds = this.selectedStateIds.filter(
-          (id) => !currentPageIds.includes(id)
+          (id) => !currentIds.includes(id)
         );
       }
     },

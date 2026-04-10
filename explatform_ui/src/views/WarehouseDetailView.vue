@@ -154,15 +154,16 @@
     />
   </div>
 </template>
-
 <script>
 import AppPagination from "../components/AppPagination.vue";
 
 export default {
   name: "WarehouseView",
+
   components: {
     AppPagination,
   },
+
   data() {
     return {
       searchWarehouseId: "",
@@ -173,60 +174,34 @@ export default {
       selectedWarehouseIds: [],
       editingWarehouseId: null,
       isAdding: false,
+
       editForm: {
         warehouseCode: "",
         warehouseName: "",
       },
-      warehouses: [
-        {
-          warehouseId: "WH001",
-          warehouseCode: "W-1001",
-          warehouseName: "Main Store",
-        },
-        {
-          warehouseId: "WH002",
-          warehouseCode: "W-1002",
-          warehouseName: "Raw Material House",
-        },
-        {
-          warehouseId: "WH003",
-          warehouseCode: "W-1003",
-          warehouseName: "Finished Goods House",
-        },
-        {
-          warehouseId: "WH004",
-          warehouseCode: "W-1004",
-          warehouseName: "Packaging House",
-        },
-        {
-          warehouseId: "WH005",
-          warehouseCode: "W-1005",
-          warehouseName: "Backup Storage",
-        },
-        {
-          warehouseId: "WH006",
-          warehouseCode: "W-1006",
-          warehouseName: "Export Warehouse",
-        },
-      ],
+
+      warehouses: [],
     };
   },
+
+  mounted() {
+    this.fetchWarehouses();
+  },
+
   computed: {
     filteredWarehouses() {
       return this.warehouses.filter((warehouse) => {
-        const matchWarehouseId = warehouse.warehouseId
-          .toLowerCase()
-          .includes(this.searchWarehouseId.toLowerCase());
-
-        const matchWarehouseCode = warehouse.warehouseCode
-          .toLowerCase()
-          .includes(this.searchWarehouseCode.toLowerCase());
-
-        const matchWarehouseName = warehouse.warehouseName
-          .toLowerCase()
-          .includes(this.searchWarehouseName.toLowerCase());
-
-        return matchWarehouseId && matchWarehouseCode && matchWarehouseName;
+        return (
+          (warehouse.warehouseId || "")
+            .toLowerCase()
+            .includes(this.searchWarehouseId.toLowerCase()) &&
+          (warehouse.warehouseCode || "")
+            .toLowerCase()
+            .includes(this.searchWarehouseCode.toLowerCase()) &&
+          (warehouse.warehouseName || "")
+            .toLowerCase()
+            .includes(this.searchWarehouseName.toLowerCase())
+        );
       });
     },
 
@@ -236,8 +211,7 @@ export default {
 
     paginatedWarehouses() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredWarehouses.slice(start, end);
+      return this.filteredWarehouses.slice(start, start + this.itemsPerPage);
     },
 
     isAllCurrentPageSelected() {
@@ -252,6 +226,7 @@ export default {
       return this.editingWarehouseId !== null || this.isAdding;
     },
   },
+
   watch: {
     searchWarehouseId() {
       this.currentPage = 1;
@@ -263,7 +238,24 @@ export default {
       this.currentPage = 1;
     },
   },
+
   methods: {
+    // ✅ BASE URL
+    BASE_URL() {
+      return "http://localhost:8080/api";
+    },
+
+    // ✅ FETCH
+    fetchWarehouses() {
+      fetch(`${this.BASE_URL()}/warehouses`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("API DATA:", data);
+          this.warehouses = data;
+        })
+        .catch((err) => console.error("Fetch Error:", err));
+    },
+
     changePage(page) {
       if (page < 1 || page > this.totalPages) return;
       this.currentPage = page;
@@ -282,7 +274,7 @@ export default {
 
     handleAdd() {
       if (this.isEditing) {
-        alert("Please save or cancel the current editing first.");
+        alert("Please save or cancel current editing first.");
         return;
       }
 
@@ -295,73 +287,85 @@ export default {
 
     handleEdit() {
       if (this.isAdding) {
-        alert("Please save or cancel the new row first.");
+        alert("Please save/cancel new row first.");
         return;
       }
 
-      if (this.selectedWarehouseIds.length === 0) {
-        alert("Please select one warehouse to edit.");
-        return;
-      }
-
-      if (this.selectedWarehouseIds.length > 1) {
-        alert("Please select only one warehouse to edit.");
+      if (this.selectedWarehouseIds.length !== 1) {
+        alert("Select exactly ONE warehouse.");
         return;
       }
 
       const selectedId = this.selectedWarehouseIds[0];
+
       const warehouse = this.warehouses.find(
-        (item) => item.warehouseId === selectedId
+        (w) => w.warehouseId === selectedId
       );
 
       if (!warehouse) return;
 
       this.editingWarehouseId = selectedId;
+
       this.editForm = {
         warehouseCode: warehouse.warehouseCode,
         warehouseName: warehouse.warehouseName,
       };
     },
 
+    // 🔥 MAIN FIX HERE
     handleSave() {
+
+      // ✅ ADD
       if (this.isAdding) {
-        if (!this.editForm.warehouseCode || !this.editForm.warehouseName) {
-          alert("Please fill all fields before saving.");
-          return;
-        }
 
-        const nextNumber = this.warehouses.length + 1;
-        const newWarehouseId = `WH${String(nextNumber).padStart(3, "0")}`;
+        // 🔥 AUTO GENERATE ID
+        const nextIdNumber = this.warehouses.length + 1;
+        const warehouseId = "WH" + String(nextIdNumber).padStart(3, "0");
 
-        const newWarehouse = {
-          warehouseId: newWarehouseId,
+        const payload = {
+          warehouseId: warehouseId,
           warehouseCode: this.editForm.warehouseCode,
           warehouseName: this.editForm.warehouseName,
         };
 
-        this.warehouses.unshift(newWarehouse);
-        this.isAdding = false;
-        this.resetEditForm();
+        fetch(`${this.BASE_URL()}/warehouses`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+          .then((res) => res.json())
+          .then(() => {
+            console.log("Warehouse Added");
+            this.fetchWarehouses();
+            this.isAdding = false;
+          })
+          .catch((err) => console.error("POST ERROR:", err));
+
         return;
       }
 
-      if (!this.editingWarehouseId) return;
-
-      const warehouseIndex = this.warehouses.findIndex(
-        (warehouse) => warehouse.warehouseId === this.editingWarehouseId
+      // ✅ UPDATE
+      const selected = this.warehouses.find(
+        (w) => w.warehouseId === this.editingWarehouseId
       );
 
-      if (warehouseIndex === -1) return;
+      if (!selected) return;
 
-      this.warehouses[warehouseIndex] = {
-        ...this.warehouses[warehouseIndex],
-        warehouseCode: this.editForm.warehouseCode,
-        warehouseName: this.editForm.warehouseName,
-      };
-
-      this.warehouses = [...this.warehouses];
-      this.editingWarehouseId = null;
-      this.resetEditForm();
+      fetch(`${this.BASE_URL()}/warehouses/${selected.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...selected,
+          ...this.editForm,
+        }),
+      })
+        .then((res) => res.json())
+        .then(() => {
+          console.log("Warehouse Updated");
+          this.fetchWarehouses();
+          this.editingWarehouseId = null;
+        })
+        .catch((err) => console.error("PUT ERROR:", err));
     },
 
     handleCancelEdit() {
@@ -371,32 +375,20 @@ export default {
     },
 
     handleDelete() {
-      if (this.isEditing) {
-        alert("Please save or cancel editing first.");
-        return;
-      }
-
-      if (this.selectedWarehouseIds.length === 0) {
-        alert("Please select at least one warehouse to delete.");
-        return;
-      }
-
-      const confirmed = window.confirm(
-        "Are you sure you want to delete the selected warehouse(s)?"
+      const selected = this.warehouses.filter((w) =>
+        this.selectedWarehouseIds.includes(w.warehouseId)
       );
 
-      if (!confirmed) return;
-
-      this.warehouses = this.warehouses.filter(
-        (warehouse) =>
-          !this.selectedWarehouseIds.includes(warehouse.warehouseId)
-      );
-
-      this.selectedWarehouseIds = [];
-
-      if (this.currentPage > this.totalPages) {
-        this.currentPage = this.totalPages;
-      }
+      Promise.all(
+        selected.map((w) =>
+          fetch(`${this.BASE_URL()}/warehouses/${w.id}`, {
+            method: "DELETE",
+          })
+        )
+      ).then(() => {
+        this.fetchWarehouses();
+        this.selectedWarehouseIds = [];
+      });
     },
 
     handleReset() {
@@ -412,12 +404,13 @@ export default {
       if (this.isEditing) return;
 
       const currentPageIds = this.paginatedWarehouses.map(
-        (warehouse) => warehouse.warehouseId
+        (w) => w.warehouseId
       );
 
       if (event.target.checked) {
-        const merged = [...this.selectedWarehouseIds, ...currentPageIds];
-        this.selectedWarehouseIds = [...new Set(merged)];
+        this.selectedWarehouseIds = [
+          ...new Set([...this.selectedWarehouseIds, ...currentPageIds]),
+        ];
       } else {
         this.selectedWarehouseIds = this.selectedWarehouseIds.filter(
           (id) => !currentPageIds.includes(id)
@@ -426,12 +419,13 @@ export default {
     },
 
     goToWarehouseState(warehouse) {
-      this.$router.push(`/dashboard/warehouse-state/${warehouse.warehouseId}`);
+      this.$router.push(
+        `/dashboard/warehouse-state/${warehouse.warehouseId}`
+      );
     },
   },
 };
 </script>
-
 <style scoped>
 .warehouse-page {
   width: 100%;
