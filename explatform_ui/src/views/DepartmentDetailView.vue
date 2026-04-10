@@ -201,23 +201,23 @@ export default {
     };
   },
 
-  // ✅ FIXED: inside export default
-  mounted() {
-    fetch("/departments")
-      .then((res) => res.json())
-      .then((data) => {
-        this.departments = data;
-      })
-      .catch((err) => {
-        console.error("Error fetching departments:", err);
-      });
-  },
+mounted() {
+  fetch("http://localhost:8080/departments")
+    .then((res) => res.json())
+    .then((data) => {
+      console.log("DATA:", data); // 👈 check this
+      this.departments = data;
+    })
+    .catch((err) => {
+      console.error("Error fetching departments:", err);
+    });
+},
 
   computed: {
     filteredDepartments() {
       return this.departments.filter((department) => {
-        const matchDepartmentId = department.departmentId
-          ?.toLowerCase()
+        const matchDepartmentId = String(department.departmentId)
+  .toLowerCase()
           .includes(this.searchDepartmentId.toLowerCase());
 
         const matchDepartmentCode = department.departmentCode

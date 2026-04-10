@@ -1,11 +1,7 @@
 package com.explatform.backend.model;
 
 import jakarta.persistence.*;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+
 @Entity
 @Table(name = "department_work")
 public class DepartmentWork {
@@ -34,10 +30,38 @@ public class DepartmentWork {
     private String quantity;
 
     private String details;
+
     private String note;
 
-    public void setId(int id) {
-    }
+    // ✅ GETTERS & SETTERS
 
-    // getters & setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+
+    public String getDepartmentId() { return departmentId; }
+    public void setDepartmentId(String departmentId) { this.departmentId = departmentId; }
+
+    public String getOnProcessWork() { return onProcessWork; }
+    public void setOnProcessWork(String onProcessWork) { this.onProcessWork = onProcessWork; }
+
+    public String getProcessCode() { return processCode; }
+    public void setProcessCode(String processCode) { this.processCode = processCode; }
+
+    public String getBuyer() { return buyer; }
+    public void setBuyer(String buyer) { this.buyer = buyer; }
+
+    public String getPurchaseDate() { return purchaseDate; }
+    public void setPurchaseDate(String purchaseDate) { this.purchaseDate = purchaseDate; }
+
+    public String getDeliveryDate() { return deliveryDate; }
+    public void setDeliveryDate(String deliveryDate) { this.deliveryDate = deliveryDate; }
+
+    public String getQuantity() { return quantity; }
+    public void setQuantity(String quantity) { this.quantity = quantity; }
+
+    public String getDetails() { return details; }
+    public void setDetails(String details) { this.details = details; }
+
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 }

@@ -153,11 +153,14 @@
 <script>
 import AppPagination from "../components/AppPagination.vue";
 
+const API_BASE = "http://localhost:8080/api";
+
 export default {
   name: "DepartmentWorkListView",
   components: {
     AppPagination,
   },
+
   data() {
     return {
       searchProcessCode: "",
@@ -168,6 +171,7 @@ export default {
       selectedWorkIds: [],
       editingWorkId: null,
       isAdding: false,
+
       editForm: {
         onProcessWork: "",
         processCode: "",
@@ -178,7 +182,8 @@ export default {
         details: "",
         note: "",
       },
-      works: [], // ✅ now dynamic from API
+
+      works: [],
     };
   },
 
@@ -191,15 +196,17 @@ export default {
       return this.works
         .filter((item) => item.departmentId === this.departmentId)
         .filter((item) => {
-          const matchProcessCode = item.processCode
-            ?.toLowerCase()
+          const matchProcessCode = String(item.processCode || "")
+            .toLowerCase()
             .includes(this.searchProcessCode.toLowerCase());
 
           const matchStartDate =
-            !this.searchStartDate || item.purchaseDate >= this.searchStartDate;
+            !this.searchStartDate ||
+            new Date(item.purchaseDate) >= new Date(this.searchStartDate);
 
           const matchEndDate =
-            !this.searchEndDate || item.purchaseDate <= this.searchEndDate;
+            !this.searchEndDate ||
+            new Date(item.purchaseDate) <= new Date(this.searchEndDate);
 
           return matchProcessCode && matchStartDate && matchEndDate;
         });
@@ -241,98 +248,119 @@ export default {
   },
 
   mounted() {
-    this.fetchWorks(); // ✅ load from backend
+    this.fetchWorks();
   },
 
-methods: {
-  // ✅ BASE URL (IMPORTANT)
-  BASE_URL() {
-    return "http://localhost:8080";
-  },
+  methods: {
+    // ✅ FETCH DATA
+    fetchWorks() {
+      fetch(`${API_BASE}/department-works/${this.departmentId}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch works");
+          return res.json();
+        })
+        .then((data) => {
+          console.log("WORK DATA:", data); // 🔍 debug
+          this.works = data;
+        })
+        .catch((err) => {
+          console.error("Error fetching works:", err);
+          this.works = [];
+        });
+    },
 
-  // ✅ FETCH DATA FROM BACKEND
-  fetchWorks() {
-    fetch(`${this.BASE_URL()}/department-works/${this.departmentId}`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch works");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        this.works = data;
-      })
-      .catch((err) => {
-        console.error("Error fetching works:", err);
-        this.works = [];
-      });
-  },
+    goBack() {
+      this.$router.push("/dashboard/department-detail");
+    },
 
-  goBack() {
-    this.$router.push("/dashboard/department-detail");
-  },
+    changePage(page) {
+      if (page < 1 || page > this.totalPages) return;
+      this.currentPage = page;
+    },
 
-  changePage(page) {
-    if (page < 1 || page > this.totalPages) return;
-    this.currentPage = page;
-  },
+    resetEditForm() {
+      this.editForm = {
+        onProcessWork: "",
+        processCode: "",
+        buyer: "",
+        purchaseDate: "",
+        deliveryDate: "",
+        quantity: "",
+        details: "",
+        note: "",
+      };
+    },
 
-  resetEditForm() {
-    this.editForm = {
-      onProcessWork: "",
-      processCode: "",
-      buyer: "",
-      purchaseDate: "",
-      deliveryDate: "",
-      quantity: "",
-      details: "",
-      note: "",
-    };
-  },
+    handleSearch() {
+      this.currentPage = 1;
+    },
 
-  handleSearch() {
-    this.currentPage = 1;
-  },
+    handleAdd() {
+      if (this.isEditing) {
+        alert("Please save or cancel current editing first.");
+        return;
+      }
 
-  handleAdd() {
-    if (this.isEditing) {
-      alert("Please save or cancel the current editing first.");
-      return;
-    }
+      this.isAdding = true;
+      this.editingWorkId = null;
+      this.selectedWorkIds = [];
+      this.resetEditForm();
+      this.currentPage = 1;
+    },
 
-    this.isAdding = true;
-    this.editingWorkId = null;
-    this.selectedWorkIds = [];
-    this.resetEditForm();
-    this.currentPage = 1;
-  },
+    handleEdit() {
+      if (this.isAdding) {
+        alert("Please save or cancel new row first.");
+        return;
+      }
 
-  handleEdit() {
-    if (this.isAdding) {
-      alert("Please save or cancel the new row first.");
-      return;
-    }
+      if (this.selectedWorkIds.length !== 1) {
+        alert("Select exactly one item to edit.");
+        return;
+      }
 
-    if (this.selectedWorkIds.length !== 1) {
-      alert("Please select exactly one work item to edit.");
-      return;
-    }
+      const selectedId = this.selectedWorkIds[0];
+      const item = this.works.find((w) => w.id === selectedId);
 
-    const selectedId = this.selectedWorkIds[0];
-    const item = this.works.find((w) => w.id === selectedId);
+      if (!item) return;
 
-    if (!item) return;
+      this.editingWorkId = selectedId;
+      this.editForm = { ...item };
+    },
 
-    this.editingWorkId = selectedId;
-    this.editForm = { ...item };
-  },
+    // ✅ SAVE (ADD + UPDATE)
+    handleSave() {
+      // ➕ ADD
+      if (this.isAdding) {
+        fetch(`${API_BASE}/department-works`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...this.editForm,
+            departmentId: this.departmentId,
+          }),
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error("Add failed");
+            return res.json();
+          })
+          .then(() => {
+            this.fetchWorks();
+            this.isAdding = false;
+            this.resetEditForm();
+          })
+          .catch((err) => console.error("Add error:", err));
 
-  // ✅ SAVE (ADD + UPDATE WITH API)
-  handleSave() {
-    // ➕ ADD
-    if (this.isAdding) {
-      fetch(`${this.BASE_URL()}/department-works`, {
-        method: "POST",
+        return;
+      }
+
+      // ✏️ UPDATE
+      if (!this.editingWorkId) return;
+
+      fetch(`${API_BASE}/department-works/${this.editingWorkId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -342,104 +370,79 @@ methods: {
         }),
       })
         .then((res) => {
-          if (!res.ok) throw new Error("Failed to add");
+          if (!res.ok) throw new Error("Update failed");
           return res.json();
         })
         .then(() => {
           this.fetchWorks();
-          this.isAdding = false;
+          this.editingWorkId = null;
           this.resetEditForm();
         })
-        .catch((err) => console.error("Add error:", err));
+        .catch((err) => console.error("Update error:", err));
+    },
 
-      return;
-    }
+    handleCancelEdit() {
+      this.isAdding = false;
+      this.editingWorkId = null;
+      this.resetEditForm();
+    },
 
-    // ✏️ UPDATE
-    if (!this.editingWorkId) return;
+    // ✅ DELETE
+    handleDelete() {
+      if (this.isEditing) {
+        alert("Please finish editing first.");
+        return;
+      }
 
-    fetch(`${this.BASE_URL()}/department-works/${this.editingWorkId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(this.editForm),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to update");
-        return res.json();
-      })
-      .then(() => {
-        this.fetchWorks();
-        this.editingWorkId = null;
-        this.resetEditForm();
-      })
-      .catch((err) => console.error("Update error:", err));
-  },
+      if (!this.selectedWorkIds.length) {
+        alert("Select at least one item.");
+        return;
+      }
 
-  handleCancelEdit() {
-    this.isAdding = false;
-    this.editingWorkId = null;
-    this.resetEditForm();
-  },
+      if (!confirm("Are you sure?")) return;
 
-  // ✅ DELETE WITH API
-  handleDelete() {
-    if (this.isEditing) {
-      alert("Please save or cancel editing first.");
-      return;
-    }
-
-    if (this.selectedWorkIds.length === 0) {
-      alert("Select at least one item.");
-      return;
-    }
-
-    if (!confirm("Are you sure?")) return;
-
-    Promise.all(
-      this.selectedWorkIds.map((id) =>
-        fetch(`${this.BASE_URL()}/department-works/${id}`, {
-          method: "DELETE",
-        }).then((res) => {
-          if (!res.ok) throw new Error("Delete failed");
-        })
+      Promise.all(
+        this.selectedWorkIds.map((id) =>
+          fetch(`${API_BASE}/department-works/${id}`, {
+            method: "DELETE",
+          }).then((res) => {
+            if (!res.ok) throw new Error("Delete failed");
+          })
+        )
       )
-    )
-      .then(() => {
-        this.fetchWorks();
-        this.selectedWorkIds = [];
-      })
-      .catch((err) => console.error("Delete error:", err));
+        .then(() => {
+          this.fetchWorks();
+          this.selectedWorkIds = [];
+        })
+        .catch((err) => console.error("Delete error:", err));
+    },
+
+    handleReset() {
+      this.searchProcessCode = "";
+      this.searchStartDate = "";
+      this.searchEndDate = "";
+      this.selectedWorkIds = [];
+      this.currentPage = 1;
+      this.handleCancelEdit();
+    },
+
+    toggleSelectAllCurrentPage(event) {
+      if (this.isEditing) return;
+
+      const currentIds = this.paginatedWorks.map((item) => item.id);
+
+      if (event.target.checked) {
+        this.selectedWorkIds = [
+          ...new Set([...this.selectedWorkIds, ...currentIds]),
+        ];
+      } else {
+        this.selectedWorkIds = this.selectedWorkIds.filter(
+          (id) => !currentIds.includes(id)
+        );
+      }
+    },
   },
-
-  handleReset() {
-    this.searchProcessCode = "";
-    this.searchStartDate = "";
-    this.searchEndDate = "";
-    this.selectedWorkIds = [];
-    this.currentPage = 1;
-    this.handleCancelEdit();
-  },
-
-  toggleSelectAllCurrentPage(event) {
-    if (this.isEditing) return;
-
-    const currentPageIds = this.paginatedWorks.map((item) => item.id);
-
-    if (event.target.checked) {
-      this.selectedWorkIds = [
-        ...new Set([...this.selectedWorkIds, ...currentPageIds]),
-      ];
-    } else {
-      this.selectedWorkIds = this.selectedWorkIds.filter(
-        (id) => !currentPageIds.includes(id)
-      );
-    }
-  },
-},
 };
-
 </script>
 
 <style scoped>
