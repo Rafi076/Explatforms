@@ -70,8 +70,10 @@ export default {
 }
 
 .logo {
-  height: 42px;
+  height: 48px;
   object-fit: contain;
+  position: relative;
+  top: 20px; /* moves it down */
 }
 
 .nav-right {

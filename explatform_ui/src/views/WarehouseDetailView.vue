@@ -240,12 +240,12 @@ export default {
   },
 
   methods: {
-    // ✅ BASE URL
+
     BASE_URL() {
       return "http://localhost:8080/api";
     },
 
-    // ✅ FETCH
+
     fetchWarehouses() {
       fetch(`${this.BASE_URL()}/warehouses`)
         .then((res) => res.json())
@@ -312,10 +312,10 @@ export default {
       };
     },
 
-    // 🔥 MAIN FIX HERE
+    
     handleSave() {
 
-      // ✅ ADD
+   
       if (this.isAdding) {
 
         // 🔥 AUTO GENERATE ID
